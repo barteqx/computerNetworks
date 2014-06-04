@@ -34,16 +34,16 @@ std::string& HttpResponse::getExtension () {
   return ext;
 }
 
-std::string& HttpResponse::getType () {
+void HttpResponse::getType () {
   std::string ext = getExtension();
-  if (ext == "txt") return "text/plain";
-  if (ext == "html") return "text/html";
-  if (ext == "css") return "text/css";
-  if (ext == "jpeg") return "image/jpeg";
-  if (ext == "jpg") return "image/jpg";
-  if (ext == "png") return "image/png";
-  if (ext == "pdf") return "application/pdf";
-  else return "application/octet-stream";
+  if (ext == "txt") contentType = "text/plain";
+  if (ext == "html") contentType = "text/html";
+  if (ext == "css") contentType = "text/css";
+  if (ext == "jpeg") contentType = "image/jpeg";
+  if (ext == "jpg") contentType = "image/jpg";
+  if (ext == "png") contentType = "image/png";
+  if (ext == "pdf") contentType = "application/pdf";
+  else contentType = "application/octet-stream";
 }
 
 bool HttpResponse::checkPatch () {
@@ -53,21 +53,43 @@ bool HttpResponse::checkPatch () {
  return true;
 }
 
-std::string& HttpResponse::getError(int errCode) {
+void HttpResponse::getError(int errCode) {
+
+  error = true;
+
   if (errCode == 301) 
     errorCode = "301 Moved Permanently";
 
   if (errCode == 404)
     errorCode = "404 Not Found";
 
-  if (errorCode == 501)
+  else
     errorCode = "501 Not Implemented yet";
 
-  std::string content = std::string("<html><head><title>") + errorCode + "</title></head><body><h1>" + errorCode + "</h1></body></html>";
+  content = std::string("<html><head><title>") + errorCode + "</title></head><body><h1>" + errorCode + "</h1></body></html>";
   contentLength = content.size();
-  return content;
 }
 
 void HttpResponse::getResponse (char * buffer) {
+  bool correctPath = checkPatch();
+  std::string response;
+
+  if (is_dir(contentPath))
+    getError(301);
+
+  else if (!correctPath)
+    getError(404);
+
+  else if (method != "GET")
+    getError(501);
+
+  response = std::string(http) + " " + errorCode;
+  if (location != "")
+    response = std::string(response) + "\nLocation: " + location;
+
+  response = std::string(response) + "\nConnection: " + connection;
+  response = std::string(response) + "\nContent-Length: " + itoa(contentLength);
+  response = std::string(response) + "\nContent-Type: " + contentType;
+
 
 }
