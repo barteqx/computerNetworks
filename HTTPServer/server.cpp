@@ -9,7 +9,7 @@ void HttpServer::runServer() {
   }
 
   client.sin_family = AF_INET;
-  client.sin_addr.s_addr = INADDR_LOOPBACK;
+  client.sin_addr.s_addr = INADDR_ANY;
   client.sin_port = htons(port);
 
   socketListener = bind(socketDescriptor, (struct sockaddr*)&client, sizeof(client));
