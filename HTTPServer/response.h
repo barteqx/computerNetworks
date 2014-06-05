@@ -17,7 +17,7 @@ public:
   
   void getType();
   void getError(int errCode);  
-  void getResponse(char * buffer);
+  std::string& getResponse(char * buffer);
 
 private:
   FILE *plik;

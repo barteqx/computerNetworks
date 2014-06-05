@@ -64,13 +64,13 @@ void HttpResponse::getError(int errCode) {
     errorCode = "404 Not Found";
 
   else
-    errorCode = "501 Not Implemented yet";
+    errorCode = "501 Not Implemented";
 
   content = std::string("<html><head><title>") + errorCode + "</title></head><body><h1>" + errorCode + "</h1></body></html>";
   contentLength = content.size();
 }
 
-void HttpResponse::getResponse (char * buffer) {
+std::string& HttpResponse::getResponse () {
   bool correctPath = checkPatch();
   std::string response;
 
@@ -83,13 +83,30 @@ void HttpResponse::getResponse (char * buffer) {
   else if (method != "GET")
     getError(501);
 
+  if (!error) {
+    errorCode = "200 OK";
+    content = "";
+    fseek (file , 0 , SEEK_END);
+    int filesize = ftell(file);
+    rewind(file);
+
+    int c = fread(content, 1, filesize, file);
+    if(c != filesize) printf("File size doesn't match!");
+    contentLength = filesize;
+
+    fclose(file);
+  }
+
   response = std::string(http) + " " + errorCode;
   if (location != "")
     response = std::string(response) + "\nLocation: " + location;
 
-  response = std::string(response) + "\nConnection: " + connection;
-  response = std::string(response) + "\nContent-Length: " + itoa(contentLength);
-  response = std::string(response) + "\nContent-Type: " + contentType;
+  response += "\nConnection: " + connection;
+  response += "\nContent-Length: " + itoa(contentLength);
+  response += "\nContent-Type: " + contentType;
+  response += "\r\n\r\n";
 
+  response += content;
 
+  return response; 
 }
