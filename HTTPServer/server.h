@@ -14,6 +14,9 @@ private:
   int port. socketDescriptor, socketConnection, socketListener;
   std::string path, request, response;
 
+  struct sockaddr_in client;
+  struct timeval t;
+
 public:
   HttpServer (int port, std::string& path)
     : port(port), path(path) {};
