@@ -3,7 +3,7 @@
 HttpResponse::HttpResponse (std::string& request, std::string& workingPath)
   : workingPath(workingPath) {
 
-  char *tmp, *req = strdup(request.c_str());
+  char *tmp, *req = const_cast<char*>(request.c_str());
   method = strtok(req, "\r\n");
   location = strtok(NULL, "\r\n");
   http = strtok(NULL, "\r\n");
@@ -14,13 +14,15 @@ HttpResponse::HttpResponse (std::string& request, std::string& workingPath)
     if(tmp == NULL) break;
   } while (tmp != "Connection:");
 
-  tmp = strtok(NULL, "\r\n")
-  connection = (tmp == NULL) ? "close" : tmp;
+  tmp = strtok(NULL, "\r\n");
+  if (tmp == NULL) {
+    connection = "close";
+  } else connection = tmp;
 
   std::cout << "Request received and parsed.";
 }
 
-std::string& HttpResponse::getExtension () {
+std::string HttpResponse::getExtension () {
   std::string ext;
   int i;
   for (i = 0; i < location.size(); i++) {
@@ -28,7 +30,7 @@ std::string& HttpResponse::getExtension () {
       i++;
       break;
     }
-  for (int j = 0; j + i < location.size; j++) 
+  for (int j = 0; j + i < location.size(); j++) 
     ext += location[j + i];
   }
   return ext;
@@ -46,9 +48,9 @@ void HttpResponse::getType () {
   else contentType = "application/octet-stream";
 }
 
-bool HttpResponse::checkPatch () {
+bool HttpResponse::checkPath () {
  contentPath = workingPath + location;
- file = fopen(contentPath, "rb");
+ file = fopen(contentPath.c_str(), "rb");
  if (file == NULL) return false;
  return true;
 }
@@ -70,12 +72,16 @@ void HttpResponse::getError(int errCode) {
   contentLength = content.size();
 }
 
-std::string& HttpResponse::getResponse () {
-  bool correctPath = checkPatch();
+std::string HttpResponse::getResponse () {
+  bool correctPath = checkPath();
   std::string response;
 
-  if (is_dir(contentPath))
+  DIR *dir = opendir(contentPath.c_str());
+
+  if (dir) {
     getError(301);
+    closedir(dir);
+  }
 
   else if (!correctPath)
     getError(404);
@@ -91,7 +97,10 @@ std::string& HttpResponse::getResponse () {
     int filesize = ftell(file);
     rewind(file);
 
-    int c = fread(content, 1, filesize, file);
+    char *cont;
+
+    int c = fread(cont, 1, filesize, file);
+    content = cont;
     if(c != filesize) std::cout << "File size doesn't match!";
     contentLength = filesize;
 
@@ -103,7 +112,7 @@ std::string& HttpResponse::getResponse () {
     response = std::string(response) + "\nLocation: " + location;
 
   response += "\nConnection: " + connection;
-  response += "\nContent-Length: " + itoa(contentLength);
+  response += std::string("\nContent-Length: ") + contentLength;
   response += "\nContent-Type: " + contentType;
   response += "\r\n\r\n";
 

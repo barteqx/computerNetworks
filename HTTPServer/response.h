@@ -1,5 +1,10 @@
 #include <iostream>
+#include <sstream>
 #include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <dirent.h>
+#include <cstring>
 
 #define BUFSIZE 1000000
 
@@ -15,14 +20,14 @@ public:
 
   HttpResponse (std::string& request, std::string& workingPath);
 
-  std::string& getExtension();
+  std::string getExtension();
   
   void getType();
   void getError(int errCode);  
-  std::string& getResponse(char * buffer);
+  std::string getResponse();
 
 private:
-  FILE *plik;
+  FILE *file;
   bool checkPath();
 
 
