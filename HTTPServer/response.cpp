@@ -86,12 +86,12 @@ std::string& HttpResponse::getResponse () {
   if (!error) {
     errorCode = "200 OK";
     content = "";
-    fseek (file , 0 , SEEK_END);
+    fseek(file, 0, SEEK_END);
     int filesize = ftell(file);
     rewind(file);
 
     int c = fread(content, 1, filesize, file);
-    if(c != filesize) printf("File size doesn't match!");
+    if(c != filesize) std::cout << "File size doesn't match!";
     contentLength = filesize;
 
     fclose(file);
@@ -107,6 +107,8 @@ std::string& HttpResponse::getResponse () {
   response += "\r\n\r\n";
 
   response += content;
+
+  length = response.size();
 
   return response; 
 }

@@ -11,6 +11,8 @@ public:
 
   bool error;
 
+  int length;
+
   HttpResponse (std::string& request, std::string& workingPath);
 
   std::string& getExtension();
