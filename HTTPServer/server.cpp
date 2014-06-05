@@ -58,3 +58,17 @@ void HttpServer::runServer() {
   if (close(socketConnection) < 0)
     perror("Socket closing error");
 }
+
+int main(int argc, char const *argv[]) {
+
+  if (argc != 3 || is_dir(argv[2])) {
+    perror("Bad arguments! Usage: server <port> <directory>");
+    exit(1);
+  }
+
+  HttpServer server(atoi(argv[1]), argv[2]);
+
+  server.runserver();
+
+  std::cout << "Quitiing...";
+}

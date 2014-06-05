@@ -29,7 +29,7 @@ std::string& HttpResponse::getExtension () {
       break;
     }
   for (int j = 0; j + i < location.size; j++) 
-    ext << location[j + i];
+    ext += location[j + i];
   }
   return ext;
 }
@@ -84,6 +84,7 @@ std::string& HttpResponse::getResponse () {
     getError(501);
 
   if (!error) {
+    getType();
     errorCode = "200 OK";
     content = "";
     fseek(file, 0, SEEK_END);
