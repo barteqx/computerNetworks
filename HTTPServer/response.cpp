@@ -12,7 +12,7 @@ HttpResponse::HttpResponse (std::string& request, std::string& workingPath)
   do {
     tmp = strtok(NULL, " \r\n");
     if(tmp == NULL) break;
-  } while (tmp != "Connection:");
+  } while (strcmp(tmp, "Connection:") == 0);
 
   tmp = strtok(NULL, "\r\n");
   if (tmp == NULL) {
@@ -24,7 +24,7 @@ HttpResponse::HttpResponse (std::string& request, std::string& workingPath)
 
 std::string HttpResponse::getExtension () {
   std::string ext;
-  int i;
+  unsigned int i;
   for (i = 0; i < location.size(); i++) {
     if (location[i] == '.') {
       i++;
@@ -97,7 +97,7 @@ std::string HttpResponse::getResponse () {
     int filesize = ftell(file);
     rewind(file);
 
-    char *cont;
+    char cont[] = "";
 
     int c = fread(cont, 1, filesize, file);
     content = cont;

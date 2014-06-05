@@ -55,7 +55,6 @@ void HttpServer::runServer() {
 
     response = resp.getResponse();
 
-    const int s = resp.length+1; 
     char *re = const_cast<char*>(response.c_str());
 
     e = send(socketConnection, re, resp.length, 0);
