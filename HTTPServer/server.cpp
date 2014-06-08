@@ -21,19 +21,6 @@ void HttpServer::runServer() {
 
   while (true) {
 
-    t.tv_sec = 1;
-
-    fd_set descriptors;
-    FD_ZERO(&descriptors);
-    FD_SET(socketConnection, &descriptors);
-
-    int e;
-
-    if ((e = select(socketConnection, &descriptors, NULL, NULL, &t)) < 0) {
-      perror("Socket selection error");
-      break;
-    }
-
     socklen_t clilen = sizeof(client);
     socketConnection = accept(socketDescriptor, (struct sockaddr*) &client, &clilen);
     if (socketConnection == -1) {
@@ -41,6 +28,7 @@ void HttpServer::runServer() {
       continue;
     }
 
+    
     char r[BUFSIZE+1];
 
     e = recv(socketConnection, r, BUFSIZE, 0);
@@ -63,6 +51,20 @@ void HttpServer::runServer() {
 
     if (resp.connection == "close")
       break;
+
+    t.tv_sec = 1;
+
+    fd_set *descriptors;
+    FD_ZERO(descriptors);
+    FD_SET(socketConnection, descriptors);
+
+    int e;
+
+    if ((e = select(socketConnection, &descriptors, NULL, NULL, &t)) < 0) {
+      perror("Socket selection error");
+      break;
+    }
+
     
   }
 
