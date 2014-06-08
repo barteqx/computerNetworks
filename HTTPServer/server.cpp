@@ -15,7 +15,7 @@ void HttpServer::runServer() {
   socketListener = bind(socketDescriptor, (struct sockaddr*)&client, sizeof(client));
 
   if (socketListener == -1) {
-    perror("Socket bind error!");
+    perror("Socket bind error");
     exit(1);
   }
 
@@ -30,14 +30,14 @@ void HttpServer::runServer() {
     int e;
 
     if ((e = select(socketConnection, &descriptors, NULL, NULL, &t)) < 0) {
-      perror("Socket selection error!");
+      perror("Socket selection error");
       break;
     }
 
     socklen_t clilen = sizeof(client);
     socketConnection = accept(socketDescriptor, (struct sockaddr*) &client, &clilen);
     if (socketConnection == -1) {
-      perror("Connection error!");
+      perror("Connection error");
       continue;
     }
 
@@ -45,7 +45,7 @@ void HttpServer::runServer() {
 
     e = recv(socketConnection, r, BUFSIZE, 0);
     if (e == -1) {
-      perror("Recv error!");
+      perror("Recv error");
       continue;
     }
 
