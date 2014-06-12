@@ -3,7 +3,7 @@
 HttpResponse::HttpResponse (std::string& request, std::string& workingPath)
   : workingPath(workingPath) {
 
-  std::cout << "___________\nRequest:\n" << request << std::endl;
+  std::cout << "\n\n___________\nRequest:\n" << request << std::endl;
 
   char *tmp, *req = const_cast<char*>(request.c_str());
   method = strtok(req, " ");
@@ -43,7 +43,6 @@ std::string HttpResponse::getExtension () {
 
 void HttpResponse::getType () {
   char *ext = const_cast<char*>(getExtension().c_str());
-  std::cout << ext << std::endl;
   if (strcmp(ext, "txt") == 0) contentType = "text/plain";
   else if (strcmp(ext, "html") == 0) contentType = "text/html";
   else if (strcmp(ext, "css") == 0) contentType = "text/css";
@@ -55,8 +54,8 @@ void HttpResponse::getType () {
 }
 
 bool HttpResponse::checkPath () {
- contentPath = "/" + workingPath + "/" + hostname + location;
- std::cout << contentPath << std::endl;
+ contentPath = workingPath + "/" + hostname + location;
+ std::cout << "File to be sent: " << contentPath << std::endl;
  file = fopen(contentPath.c_str(), "rb");
  if (file == NULL) return false;
  return true;

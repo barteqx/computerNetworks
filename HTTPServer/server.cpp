@@ -59,8 +59,6 @@ void HttpServer::runServer() {
     if ((e = select(socketConnection, &descriptors, NULL, NULL, &t)) < 0) {
       printf("Socket selection error");
     }
-
-    
   }
 
   if (close(socketConnection) < 0)
