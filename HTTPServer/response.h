@@ -5,18 +5,28 @@
 #include <stdlib.h>
 #include <dirent.h>
 #include <cstring>
+#include <cstdlib>
+#include <cstdio>
 
 #define BUFSIZE 1000000
 
 class HttpResponse {
 
 public:
-  std::string method, contentLength, contentType, contentPath,
+  std::string method, contentType, contentPath,
       location, http, hostname, connection, workingPath, errorCode, content;
 
   bool error;
 
-  int length;
+  int length, contentLength, fd;
+
+  FILE *file;
+
+  unsigned char *buffer;
+  unsigned char *b;
+  unsigned char *r;
+
+  int l;
 
   HttpResponse (std::string& request, std::string& workingPath);
 
@@ -24,10 +34,14 @@ public:
   
   void getType();
   void getError(int errCode);  
-  std::string getResponse();
+  void getResponse();
+  void fileclose();
+
+  ~HttpResponse() {
+    free(buffer);
+  }
 
 private:
-  FILE *file;
   bool checkPath();
 
 

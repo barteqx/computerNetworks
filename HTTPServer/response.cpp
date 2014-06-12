@@ -3,23 +3,27 @@
 HttpResponse::HttpResponse (std::string& request, std::string& workingPath)
   : workingPath(workingPath) {
 
+  std::cout << "___________\nRequest:\n" << request << std::endl;
+
   char *tmp, *req = const_cast<char*>(request.c_str());
-  method = strtok(req, "\r\n");
-  location = strtok(NULL, "\r\n");
-  http = strtok(NULL, "\r\n");
+  method = strtok(req, " ");
+  location = strtok(NULL, " ");
+  http = strtok(NULL, " \r\n");
+  tmp = strtok(NULL, " ");
   hostname = strtok(NULL, "\r\n");
 
   do {
     tmp = strtok(NULL, " \r\n");
     if(tmp == NULL) break;
-  } while (strcmp(tmp, "Connection:") == 0);
+  } while (strcmp(tmp, "Connection:") == 1);
 
-  tmp = strtok(NULL, "\r\n");
+  tmp = strtok(NULL, " \r\n");
   if (tmp == NULL) {
     connection = "close";
   } else connection = tmp;
 
-  std::cout << "Request received and parsed.";
+
+  std::cout << "Request received and parsed." << std::endl;
 }
 
 std::string HttpResponse::getExtension () {
@@ -30,21 +34,22 @@ std::string HttpResponse::getExtension () {
       i++;
       break;
     }
+  }
   for (int j = 0; j + i < location.size(); j++) 
     ext += location[j + i];
-  }
   return ext;
 }
 
 void HttpResponse::getType () {
-  std::string ext = getExtension();
-  if (ext == "txt") contentType = "text/plain";
-  if (ext == "html") contentType = "text/html";
-  if (ext == "css") contentType = "text/css";
-  if (ext == "jpeg") contentType = "image/jpeg";
-  if (ext == "jpg") contentType = "image/jpg";
-  if (ext == "png") contentType = "image/png";
-  if (ext == "pdf") contentType = "application/pdf";
+  char *ext = const_cast<char*>(getExtension().c_str());
+  std::cout << ext << std::endl;
+  if (strcmp(ext, "txt") == 0) contentType = "text/plain";
+  else if (strcmp(ext, "html") == 0) contentType = "text/html";
+  else if (strcmp(ext, "css") == 0) contentType = "text/css";
+  else if (strcmp(ext, "jpeg") == 0) contentType = "image/jpeg";
+  else if (strcmp(ext, "jpg") == 0) contentType = "image/jpg";
+  else if (strcmp(ext, "png") == 0) contentType = "image/png";
+  else if (strcmp(ext, "pdf") == 0) contentType = "application/pdf";
   else contentType = "application/octet-stream";
 }
 
@@ -70,13 +75,15 @@ void HttpResponse::getError(int errCode) {
 
   content = std::string("<html><head><title>") + errorCode + "</title></head><body><h1>" + errorCode + "</h1></body></html>";
   contentLength = content.size();
+  contentType = "text/html";
 }
 
-std::string HttpResponse::getResponse () {
+void HttpResponse::getResponse () {
   bool correctPath = checkPath();
-  std::string response;
+  std::stringstream response;
 
   DIR *dir = opendir(contentPath.c_str());
+  
 
   if (dir) {
     getError(301);
@@ -92,33 +99,42 @@ std::string HttpResponse::getResponse () {
   if (!error) {
     getType();
     errorCode = "200 OK";
-    content = "";
     fseek(file, 0, SEEK_END);
-    int filesize = ftell(file);
+    contentLength = ftell(file);
     rewind(file);
-
-    char cont[] = "";
-
-    int c = fread(cont, 1, filesize, file);
-    content = cont;
-    if(c != filesize) std::cout << "File size doesn't match!";
-    contentLength = filesize;
-
+    b = (unsigned char*)malloc(contentLength*sizeof(unsigned char));
+    fread(b, sizeof(unsigned char), contentLength, file);
     fclose(file);
   }
 
-  response = std::string(http) + " " + errorCode;
+  response << std::string(http) << " " << errorCode;
   if (location != "")
-    response = std::string(response) + "\nLocation: " + location;
+    response << "\nLocation: " << location;
 
-  response += "\nConnection: " + connection;
-  response += std::string("\nContent-Length: ") + contentLength;
-  response += "\nContent-Type: " + contentType;
-  response += "\r\n\r\n";
+  response << "\nConnection: " << connection;
+  response << "\nContent-Length: " << contentLength;
+  response << "\nContent-Type: " << contentType;
+  response << "\r\n\r\n";
+  if (error) {
+    response << content;
+  }
 
-  response += content;
+  r = (unsigned char*)response.str().c_str();
 
-  length = response.size();
+  l = response.str().size();
 
-  return response; 
+  if (!error) l += contentLength;
+
+  buffer = (unsigned char*)malloc(l*sizeof(unsigned char));
+  for (unsigned int i = 0; i < response.str().size(); i++) {
+    buffer[i] = r[i];
+  }
+
+  if (!error) {
+    for (int i = 0; i < contentLength; i++) {
+      buffer[i + response.str().size()] = b[i];
+    }
+  }
+
+  std::cout <<"___________\nResponse:\n" << buffer << std::endl;
 }

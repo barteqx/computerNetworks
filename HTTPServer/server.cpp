@@ -13,6 +13,7 @@ void HttpServer::runServer() {
   client.sin_port = htons(port);
 
   socketListener = bind(socketDescriptor, (struct sockaddr*)&client, sizeof(client));
+  listen(socketDescriptor, 5);
 
   if (socketListener == -1) {
     perror("Socket bind error");
@@ -20,6 +21,8 @@ void HttpServer::runServer() {
   }
 
   while (true) {
+
+    int e;
 
     socklen_t clilen = sizeof(client);
     socketConnection = accept(socketDescriptor, (struct sockaddr*) &client, &clilen);
@@ -34,35 +37,27 @@ void HttpServer::runServer() {
     e = recv(socketConnection, r, BUFSIZE, 0);
     if (e == -1) {
       perror("Recv error");
-      continue;
     }
 
     request = r;
 
     HttpResponse resp(request, path);
 
-    response = resp.getResponse();
-
-    char *re = const_cast<char*>(response.c_str());
-
-    e = send(socketConnection, re, resp.length, 0);
-
-    response = "";
+    resp.getResponse();
+    
+    e = send(socketConnection, resp.buffer, resp.l, 0);
 
     if (resp.connection == "close")
       break;
 
     t.tv_sec = 1;
 
-    fd_set *descriptors;
-    FD_ZERO(descriptors);
-    FD_SET(socketConnection, descriptors);
-
-    int e;
+    fd_set descriptors;
+    FD_ZERO(&descriptors);
+    FD_SET(socketConnection, &descriptors);
 
     if ((e = select(socketConnection, &descriptors, NULL, NULL, &t)) < 0) {
-      perror("Socket selection error");
-      break;
+      printf("Socket selection error");
     }
 
     
