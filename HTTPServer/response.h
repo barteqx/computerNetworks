@@ -13,7 +13,7 @@
 class HttpResponse {
 
 public:
-  std::string method, contentType, contentPath,
+  std::string method, contentType, contentPath, port,
       location, http, hostname, connection, workingPath, errorCode, content;
 
   bool error;
@@ -27,6 +27,8 @@ public:
   unsigned char *r;
 
   int l;
+
+  std::stringstream response;
 
   HttpResponse (std::string& request, std::string& workingPath);
 

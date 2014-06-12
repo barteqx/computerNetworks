@@ -10,7 +10,8 @@ HttpResponse::HttpResponse (std::string& request, std::string& workingPath)
   location = strtok(NULL, " ");
   http = strtok(NULL, " \r\n");
   tmp = strtok(NULL, " ");
-  hostname = strtok(NULL, "\r\n");
+  hostname = strtok(NULL, ":\r\n");
+  port = strtok(NULL, "\r\n");
 
   do {
     tmp = strtok(NULL, " \r\n");
@@ -54,7 +55,8 @@ void HttpResponse::getType () {
 }
 
 bool HttpResponse::checkPath () {
- contentPath = workingPath + location;
+ contentPath = "/" + workingPath + "/" + hostname + location;
+ std::cout << contentPath << std::endl;
  file = fopen(contentPath.c_str(), "rb");
  if (file == NULL) return false;
  return true;
@@ -63,24 +65,44 @@ bool HttpResponse::checkPath () {
 void HttpResponse::getError(int errCode) {
 
   error = true;
-
-  if (errCode == 301) 
-    errorCode = "301 Moved Permanently";
-
-  if (errCode == 404)
-    errorCode = "404 Not Found";
-
-  else
-    errorCode = "501 Not Implemented";
-
-  content = std::string("<html><head><title>") + errorCode + "</title></head><body><h1>" + errorCode + "</h1></body></html>";
-  contentLength = content.size();
   contentType = "text/html";
+
+
+  if (errCode == 301)  {
+    errorCode = "301 Moved Permanently";
+    response << http << " " << errorCode;
+    response << std::string("\nLocation: ") << "http://" << hostname << ":" << port << "/index.html" << "\r\n\r\n";
+  }
+
+  else if (errCode == 404) {
+    errorCode = "404 Not Found";
+    content = std::string("<html><head><title>") + errorCode + "</title></head><body><h1>" + errorCode + "</h1></body></html>";
+    contentLength = content.size();
+    response << http << errorCode;
+    response << "\nConnection: " << connection;
+    response << "\nContent-Length: " << contentLength;
+    response << "\nContent-Type: " << contentType;
+    response << "\r\n\r\n";
+    b = (unsigned char*)content.c_str();
+  }
+
+
+  else {
+    errorCode = "501 Not Implemented";
+    content = std::string("<html><head><title>") + errorCode + "</title></head><body><h1>" + errorCode + "</h1></body></html>";
+    contentLength = content.size();
+    response << http << "" << errorCode;
+    response << "\nConnection: " << connection;
+    response << "\nContent-Length: " << contentLength;
+    response << "\nContent-Type: " << contentType;
+    response << "\r\n\r\n";
+    b = (unsigned char*)content.c_str();
+  }
 }
 
 void HttpResponse::getResponse () {
   bool correctPath = checkPath();
-  std::stringstream response;
+  
 
   DIR *dir = opendir(contentPath.c_str());
   
@@ -88,6 +110,7 @@ void HttpResponse::getResponse () {
   if (dir) {
     getError(301);
     closedir(dir);
+
   }
 
   else if (!correctPath)
@@ -107,33 +130,27 @@ void HttpResponse::getResponse () {
     fclose(file);
   }
 
-  response << std::string(http) << " " << errorCode;
-  if (location != "")
+  if (location != "" and !error) {
+    response << http << " " << errorCode;
     response << "\nLocation: " << location;
-
-  response << "\nConnection: " << connection;
-  response << "\nContent-Length: " << contentLength;
-  response << "\nContent-Type: " << contentType;
-  response << "\r\n\r\n";
-  if (error) {
-    response << content;
+    response << "\nConnection: " << connection;
+    response << "\nContent-Length: " << contentLength;
+    response << "\nContent-Type: " << contentType;
+    response << "\r\n\r\n";
   }
-
   r = (unsigned char*)response.str().c_str();
 
   l = response.str().size();
 
-  if (!error) l += contentLength;
+  l += contentLength;
 
   buffer = (unsigned char*)malloc(l*sizeof(unsigned char));
   for (unsigned int i = 0; i < response.str().size(); i++) {
     buffer[i] = r[i];
   }
 
-  if (!error) {
-    for (int i = 0; i < contentLength; i++) {
-      buffer[i + response.str().size()] = b[i];
-    }
+  for (int i = 0; i < contentLength; i++) {
+    buffer[i + response.str().size()] = b[i];
   }
 
   std::cout <<"___________\nResponse:\n" << buffer << std::endl;
